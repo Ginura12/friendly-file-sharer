@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface AuthFormProps {
   onAuthSuccess: () => void;
@@ -11,12 +13,46 @@ export const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement Supabase authentication
-    console.log("Auth form submitted", { email, password });
-    onAuthSuccess();
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        onAuthSuccess();
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              username: email.split('@')[0], // Use part before @ as username
+            },
+          },
+        });
+        if (error) throw error;
+        toast({
+          title: "Success",
+          description: "Registration successful! Please check your email to verify your account.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,14 +76,15 @@ export const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
             />
           </div>
           <div className="space-y-2">
-            <Button type="submit" className="w-full">
-              {isLogin ? "Login" : "Register"}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Loading..." : (isLogin ? "Login" : "Register")}
             </Button>
             <Button
               type="button"
               variant="ghost"
               className="w-full"
               onClick={() => setIsLogin(!isLogin)}
+              disabled={loading}
             >
               {isLogin ? "Need an account? Register" : "Have an account? Login"}
             </Button>
