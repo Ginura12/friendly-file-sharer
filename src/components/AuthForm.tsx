@@ -18,36 +18,73 @@ export const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email || !password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
+        
         if (error) throw error;
-        onAuthSuccess();
+        if (data.user) {
+          onAuthSuccess();
+          toast({
+            title: "Success",
+            description: "Successfully logged in!",
+          });
+        }
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
-              username: email.split('@')[0], // Use part before @ as username
+              username: email.split('@')[0],
             },
           },
         });
+        
         if (error) throw error;
+        
+        if (data.user?.identities?.length === 0) {
+          toast({
+            title: "Error",
+            description: "An account with this email already exists",
+            variant: "destructive",
+          });
+          return;
+        }
+
         toast({
           title: "Success",
           description: "Registration successful! Please check your email to verify your account.",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Auth error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An error occurred during authentication",
         variant: "destructive",
       });
     } finally {
@@ -73,6 +110,7 @@ export const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={6}
             />
           </div>
           <div className="space-y-2">
