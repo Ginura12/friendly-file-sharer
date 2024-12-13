@@ -36,13 +36,14 @@ export const FileList = ({ session }) => {
       const { data, error } = await supabase
         .from('special_users')
         .select()
-        .eq('user_id', session.user.id)
-        .single();
+        .eq('user_id', session.user.id);
 
       if (error) throw error;
-      setIsSpecialUser(!!data);
+      // Check if any rows were returned
+      setIsSpecialUser(data && data.length > 0);
     } catch (error) {
       console.error('Error checking special user status:', error);
+      setIsSpecialUser(false);
     }
   };
 
