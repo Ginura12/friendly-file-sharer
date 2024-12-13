@@ -2,12 +2,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { FileReply } from "./FileReply";
+import { FileReplies } from "./FileReplies";
 
 export const FileList = ({ session }) => {
   const [files, setFiles] = useState([]);
+  const [isSpecialUser, setIsSpecialUser] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    if (session?.user) {
+      checkSpecialUser();
+    }
     fetchFiles();
 
     // Subscribe to realtime changes
@@ -24,6 +30,21 @@ export const FileList = ({ session }) => {
       supabase.removeChannel(channel);
     };
   }, [session]);
+
+  const checkSpecialUser = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('special_users')
+        .select()
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error) throw error;
+      setIsSpecialUser(!!data);
+    } catch (error) {
+      console.error('Error checking special user status:', error);
+    }
+  };
 
   const fetchFiles = async () => {
     try {
@@ -82,28 +103,38 @@ export const FileList = ({ session }) => {
         {files.length === 0 ? (
           <p className="text-gray-500 text-center">No files uploaded yet</p>
         ) : (
-          <ul className="space-y-2">
+          <div className="space-y-6">
             {files.map((file) => (
-              <li key={file.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
-                <a 
-                  href={file.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  {file.name}
-                </a>
-                {session?.user?.id === file.user_id && (
-                  <button
-                    onClick={() => handleDelete(file.id, file.url)}
-                    className="text-red-500 hover:text-red-700"
+              <div key={file.id} className="space-y-4">
+                <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                  <a 
+                    href={file.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
                   >
-                    Delete
-                  </button>
-                )}
-              </li>
+                    {file.name}
+                  </a>
+                  {session?.user?.id === file.user_id && (
+                    <button
+                      onClick={() => handleDelete(file.id, file.url)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+                <div className="pl-4 space-y-4">
+                  <FileReplies fileId={file.id} session={session} />
+                  <FileReply 
+                    fileId={file.id} 
+                    session={session} 
+                    isSpecialUser={isSpecialUser}
+                  />
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </CardContent>
     </Card>
