@@ -1,13 +1,33 @@
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { useState } from "react";
 import { FileUploader } from "@/components/FileUploader";
 import { FileList } from "@/components/FileList";
-import { AuthForm } from "@/components/AuthForm";
+import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [session, setSession] = useState(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
@@ -19,12 +39,17 @@ const Index = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {!isAuthenticated ? (
-              <AuthForm onAuthSuccess={() => setIsAuthenticated(true)} />
+            {!session ? (
+              <Auth
+                supabaseClient={supabase}
+                appearance={{ theme: ThemeSupa }}
+                theme="light"
+                providers={[]}
+              />
             ) : (
               <div className="space-y-8">
-                <FileUploader />
-                <FileList />
+                <FileUploader session={session} />
+                <FileList session={session} />
               </div>
             )}
           </CardContent>
