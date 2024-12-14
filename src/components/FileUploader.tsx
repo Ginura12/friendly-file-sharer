@@ -71,19 +71,25 @@ export const FileUploader = ({ session }) => {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4 p-4 bg-white/50 rounded-xl backdrop-blur-sm border border-white/60 shadow-lg transition-all duration-300 hover:shadow-xl">
       <Input
         type="file"
         onChange={handleFileSelect}
-        className="cursor-pointer transition-all duration-300 hover:border-primary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+        className="cursor-pointer transition-all duration-300 hover:border-primary file:mr-4 file:py-2 file:px-4 
+          file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground 
+          hover:file:bg-primary/90 file:transition-all file:duration-300 hover:file:scale-105"
       />
       <Button
         onClick={handleUpload}
         disabled={!selectedFile || uploading}
-        className="w-full gap-2 transition-all duration-300 hover:scale-105"
+        className="w-full gap-2 transition-all duration-300 hover:scale-105 group bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-primary"
       >
-        <Upload className="h-4 w-4" />
-        {uploading ? "Uploading..." : "Upload File"}
+        <Upload className="h-4 w-4 transition-transform group-hover:rotate-12" />
+        {uploading ? (
+          <span className="animate-pulse">Uploading...</span>
+        ) : (
+          "Upload File"
+        )}
       </Button>
     </div>
   );

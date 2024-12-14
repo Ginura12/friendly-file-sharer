@@ -100,13 +100,15 @@ export const FileList = ({ session }) => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       {selectedFile && (
-        <FilePreview file={selectedFile} />
+        <div className="animate-scale-in">
+          <FilePreview file={selectedFile} />
+        </div>
       )}
-      <Card className="transition-all duration-300 hover:shadow-lg">
+      <Card className="transition-all duration-300 hover:shadow-xl bg-white/80 backdrop-blur-sm border-t border-white/60 rounded-xl">
         <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+          <h3 className="text-lg md:text-xl font-semibold mb-4 bg-gradient-to-r from-primary via-blue-600 to-purple-600 bg-clip-text text-transparent">
             Uploaded Files
           </h3>
           {files.length === 0 ? (
@@ -116,29 +118,32 @@ export const FileList = ({ session }) => {
               {files.map((file, index) => (
                 <div 
                   key={file.id} 
-                  className="space-y-4 animate-fade-in"
-                  style={{ animationDelay: `${index * 100}ms` }}
+                  className="space-y-4"
+                  style={{
+                    animation: `fadeIn 0.5s ease-out forwards ${index * 100}ms`,
+                    opacity: 0
+                  }}
                 >
-                  <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-all duration-300">
+                  <div className="flex items-center justify-between p-3 hover:bg-gray-50/80 rounded-lg transition-all duration-300 group">
                     <button 
                       onClick={() => setSelectedFile(file)}
-                      className="text-blue-600 hover:underline text-left transition-colors duration-300"
+                      className="text-blue-600 hover:text-blue-800 text-left transition-colors duration-300 flex items-center gap-2 group-hover:translate-x-1 transform"
                     >
                       {file.name}
                     </button>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <a 
                         href={file.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-500 hover:text-gray-700 transition-colors duration-300"
+                        className="text-gray-500 hover:text-gray-700 transition-all duration-300 hover:scale-105"
                       >
                         Download
                       </a>
                       {session?.user?.id === file.user_id && (
                         <button
                           onClick={() => handleDelete(file.id, file.url)}
-                          className="text-red-500 hover:text-red-700 transition-colors duration-300"
+                          className="text-red-500 hover:text-red-700 transition-all duration-300 hover:scale-105"
                         >
                           Delete
                         </button>
