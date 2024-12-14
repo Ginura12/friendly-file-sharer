@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
-import { ImagePlus, Send } from "lucide-react";
+import { MessageList } from "@/components/chat/MessageList";
+import { MessageInput } from "@/components/chat/MessageInput";
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -19,10 +17,8 @@ const Chat = () => {
       setSession(session);
     });
 
-    // Fetch existing messages
     fetchMessages();
 
-    // Subscribe to new messages
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -42,7 +38,7 @@ const Chat = () => {
   const fetchMessages = async () => {
     const { data, error } = await supabase
       .from('messages')
-      .select('*, profiles:sender_id(username)')
+      .select('*, profiles:sender_id(username, email, avatar_url)')
       .order('created_at', { ascending: true });
 
     if (error) {
@@ -129,69 +125,13 @@ const Chat = () => {
           <CardTitle>Chat Room</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[60vh] mb-4 p-4">
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex flex-col ${
-                    message.sender_id === session?.user?.id
-                      ? "items-end"
-                      : "items-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[70%] rounded-lg p-3 ${
-                      message.sender_id === session?.user?.id
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-200"
-                    }`}
-                  >
-                    <p className="text-sm font-semibold mb-1">
-                      {message.profiles?.username || "Anonymous"}
-                    </p>
-                    {message.content && <p>{message.content}</p>}
-                    {message.image_url && (
-                      <img
-                        src={message.image_url}
-                        alt="Shared image"
-                        className="max-w-full rounded-lg mt-2"
-                      />
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-          <form onSubmit={sendMessage} className="flex gap-2">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1"
-            />
-            <div className="relative">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                id="image-upload"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => document.getElementById("image-upload").click()}
-              >
-                <ImagePlus className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button type="submit">
-              <Send className="h-4 w-4" />
-              Send
-            </Button>
-          </form>
+          <MessageList messages={messages} session={session} />
+          <MessageInput
+            newMessage={newMessage}
+            setNewMessage={setNewMessage}
+            handleImageUpload={handleImageUpload}
+            sendMessage={sendMessage}
+          />
         </CardContent>
       </Card>
     </div>
