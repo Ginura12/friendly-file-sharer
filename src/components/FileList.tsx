@@ -100,23 +100,29 @@ export const FileList = ({ session }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {selectedFile && (
         <FilePreview file={selectedFile} />
       )}
-      <Card>
+      <Card className="transition-all duration-300 hover:shadow-lg">
         <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4">Uploaded Files</h3>
+          <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+            Uploaded Files
+          </h3>
           {files.length === 0 ? (
-            <p className="text-gray-500 text-center">No files uploaded yet</p>
+            <p className="text-gray-500 text-center animate-pulse">No files uploaded yet</p>
           ) : (
             <div className="space-y-6">
-              {files.map((file) => (
-                <div key={file.id} className="space-y-4">
-                  <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+              {files.map((file, index) => (
+                <div 
+                  key={file.id} 
+                  className="space-y-4 animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-all duration-300">
                     <button 
                       onClick={() => setSelectedFile(file)}
-                      className="text-blue-600 hover:underline text-left"
+                      className="text-blue-600 hover:underline text-left transition-colors duration-300"
                     >
                       {file.name}
                     </button>
@@ -125,14 +131,14 @@ export const FileList = ({ session }) => {
                         href={file.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-500 hover:text-gray-700"
+                        className="text-gray-500 hover:text-gray-700 transition-colors duration-300"
                       >
                         Download
                       </a>
                       {session?.user?.id === file.user_id && (
                         <button
                           onClick={() => handleDelete(file.id, file.url)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 hover:text-red-700 transition-colors duration-300"
                         >
                           Delete
                         </button>

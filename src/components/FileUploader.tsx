@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Upload } from "lucide-react";
 
 export const FileUploader = ({ session }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -70,17 +71,18 @@ export const FileUploader = ({ session }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       <Input
         type="file"
         onChange={handleFileSelect}
-        className="cursor-pointer"
+        className="cursor-pointer transition-all duration-300 hover:border-primary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
       />
       <Button
         onClick={handleUpload}
         disabled={!selectedFile || uploading}
-        className="w-full"
+        className="w-full gap-2 transition-all duration-300 hover:scale-105"
       >
+        <Upload className="h-4 w-4" />
         {uploading ? "Uploading..." : "Upload File"}
       </Button>
     </div>

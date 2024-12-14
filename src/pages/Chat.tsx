@@ -4,6 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { MessageList } from "@/components/chat/MessageList";
 import { MessageInput } from "@/components/chat/MessageInput";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -108,10 +111,19 @@ const Chat = () => {
 
   if (!session) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Card className="w-full max-w-md">
+      <div className="flex items-center justify-center h-screen animate-fade-in">
+        <Card className="w-full max-w-md transition-all duration-300 hover:shadow-lg">
           <CardContent className="p-6">
             <p className="text-center">Please log in to access the chat.</p>
+            <Link to="/" className="block mt-4">
+              <Button 
+                variant="outline" 
+                className="w-full gap-2 transition-all duration-300 hover:scale-105"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -119,10 +131,21 @@ const Chat = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4">
-      <Card className="max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle>Chat Room</CardTitle>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 animate-fade-in">
+      <Card className="max-w-4xl mx-auto transition-all duration-300 hover:shadow-lg">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+            Chat Room
+          </CardTitle>
+          <Link to="/">
+            <Button 
+              variant="outline" 
+              className="gap-2 transition-all duration-300 hover:scale-105"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </Button>
+          </Link>
         </CardHeader>
         <CardContent>
           <MessageList messages={messages} session={session} />

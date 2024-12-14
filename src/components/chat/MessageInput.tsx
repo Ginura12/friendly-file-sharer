@@ -16,12 +16,12 @@ export const MessageInput = ({
   sendMessage,
 }: MessageInputProps) => {
   return (
-    <form onSubmit={sendMessage} className="flex gap-2">
+    <form onSubmit={sendMessage} className="flex gap-2 animate-fade-in">
       <Input
         value={newMessage}
         onChange={(e) => setNewMessage(e.target.value)}
         placeholder="Type your message..."
-        className="flex-1"
+        className="flex-1 transition-all duration-300 focus:ring-2 focus:ring-primary/50"
       />
       <div className="relative">
         <input
@@ -36,12 +36,16 @@ export const MessageInput = ({
           variant="outline"
           size="icon"
           onClick={() => document.getElementById("image-upload")?.click()}
+          className="transition-all duration-300 hover:scale-105"
         >
           <ImagePlus className="h-4 w-4" />
         </Button>
       </div>
-      <Button type="submit">
-        <Send className="h-4 w-4 mr-2" />
+      <Button 
+        type="submit"
+        className="gap-2 transition-all duration-300 hover:scale-105"
+      >
+        <Send className="h-4 w-4" />
         Send
       </Button>
     </form>

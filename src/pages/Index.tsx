@@ -28,15 +28,18 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <Card className="w-full backdrop-blur-sm bg-white/80">
+      <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+        <Card className="w-full backdrop-blur-sm bg-white/80 transition-all duration-300 hover:shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-2xl font-bold">
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
               Friendly File Sharer
             </CardTitle>
             {session && (
               <Link to="/chat">
-                <Button variant="outline" className="gap-2">
+                <Button 
+                  variant="outline" 
+                  className="gap-2 transition-all duration-300 hover:scale-105 hover:bg-primary hover:text-white"
+                >
                   <MessageCircle className="h-4 w-4" />
                   Chat Room
                 </Button>
@@ -45,14 +48,30 @@ const Index = () => {
           </CardHeader>
           <CardContent>
             {!session ? (
-              <Auth
-                supabaseClient={supabase}
-                appearance={{ theme: ThemeSupa }}
-                theme="light"
-                providers={[]}
-              />
+              <div className="animate-scale-in">
+                <Auth
+                  supabaseClient={supabase}
+                  appearance={{ 
+                    theme: ThemeSupa,
+                    style: {
+                      button: {
+                        transition: 'all 0.3s ease',
+                        transform: 'scale(1)',
+                      },
+                      anchor: {
+                        transition: 'all 0.3s ease',
+                      },
+                      container: {
+                        animation: 'fadeIn 0.5s ease-out',
+                      },
+                    },
+                  }}
+                  theme="light"
+                  providers={[]}
+                />
+              </div>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-8 animate-fade-in">
                 <FileUploader session={session} />
                 <FileList session={session} />
               </div>
