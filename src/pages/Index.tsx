@@ -48,14 +48,7 @@ const Index = () => {
           </CardHeader>
           <CardContent className="p-6">
             {!session ? (
-              <div 
-                className="animate-scale-in"
-                style={{
-                  '--tw-scale': '0.95',
-                  opacity: 0,
-                  animation: 'scale-in 0.5s ease-out forwards'
-                }}
-              >
+              <div className="opacity-0 scale-95 animate-scale-in">
                 <Auth
                   supabaseClient={supabase}
                   appearance={{ 
@@ -64,15 +57,9 @@ const Index = () => {
                       button: {
                         transition: 'all 0.3s ease',
                         transform: 'scale(1)',
-                        '&:hover': {
-                          transform: 'scale(1.02)',
-                        }
                       },
                       anchor: {
                         transition: 'all 0.3s ease',
-                        '&:hover': {
-                          opacity: 0.8
-                        }
                       },
                       container: {
                         animation: 'fadeIn 0.5s ease-out',
@@ -85,10 +72,10 @@ const Index = () => {
               </div>
             ) : (
               <div className="space-y-8">
-                <div className="animate-fade-in" style={{ '--tw-delay': '100ms' }}>
+                <div className="animate-fade-in delay-100">
                   <FileUploader session={session} />
                 </div>
-                <div className="animate-fade-in" style={{ '--tw-delay': '200ms' }}>
+                <div className="animate-fade-in delay-200">
                   <FileList session={session} />
                 </div>
               </div>
