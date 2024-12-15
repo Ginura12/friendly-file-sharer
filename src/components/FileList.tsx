@@ -15,8 +15,8 @@ export const FileList = ({ session }) => {
   useEffect(() => {
     if (session?.user) {
       checkSpecialUser();
+      fetchFiles(); // Fetch files when session is available
     }
-    fetchFiles();
 
     // Subscribe to realtime changes
     const channel = supabase
@@ -24,6 +24,7 @@ export const FileList = ({ session }) => {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'files' },
         (payload) => {
+          console.log('Files changed:', payload);
           fetchFiles();
       })
       .subscribe();
@@ -31,7 +32,7 @@ export const FileList = ({ session }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session]);
+  }, [session]); // Add session as dependency
 
   const checkSpecialUser = async () => {
     try {
@@ -50,14 +51,21 @@ export const FileList = ({ session }) => {
 
   const fetchFiles = async () => {
     try {
+      console.log('Fetching files...');
       const { data, error } = await supabase
         .from('files')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching files:', error);
+        throw error;
+      }
+      
+      console.log('Files fetched:', data);
       setFiles(data || []);
     } catch (error) {
+      console.error('Error in fetchFiles:', error);
       toast({
         title: "Error",
         description: "Failed to fetch files",
@@ -91,6 +99,7 @@ export const FileList = ({ session }) => {
         description: "File deleted successfully",
       });
     } catch (error) {
+      console.error('Error deleting file:', error);
       toast({
         title: "Error",
         description: "Failed to delete file",
@@ -118,10 +127,9 @@ export const FileList = ({ session }) => {
               {files.map((file, index) => (
                 <div 
                   key={file.id} 
-                  className="space-y-4"
+                  className="space-y-4 opacity-0"
                   style={{
-                    animation: `fadeIn 0.5s ease-out forwards ${index * 100}ms`,
-                    opacity: 0
+                    animation: `fadeIn 0.5s ease-out forwards ${index * 100}ms`
                   }}
                 >
                   <div className="flex items-center justify-between p-3 hover:bg-gray-50/80 rounded-lg transition-all duration-300 group">
