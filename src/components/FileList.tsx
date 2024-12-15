@@ -56,9 +56,6 @@ export const FileList = ({ session }) => {
         .from('files')
         .select('*');
       
-      // If you want to show only the current user's files, uncomment the next line
-      // query = query.eq('user_id', session.user.id);
-      
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
@@ -131,10 +128,7 @@ export const FileList = ({ session }) => {
               {files.map((file, index) => (
                 <div 
                   key={file.id} 
-                  className="space-y-4 opacity-0"
-                  style={{
-                    animation: `fadeIn 0.5s ease-out forwards ${index * 100}ms`
-                  }}
+                  className="space-y-4"
                 >
                   <div className="flex items-center justify-between p-3 hover:bg-gray-50/80 rounded-lg transition-all duration-300 group">
                     <button 
