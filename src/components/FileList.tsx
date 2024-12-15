@@ -15,7 +15,7 @@ export const FileList = ({ session }) => {
   useEffect(() => {
     if (session?.user) {
       checkSpecialUser();
-      fetchFiles(); // Fetch files when session is available
+      fetchFiles();
     }
 
     // Subscribe to realtime changes
@@ -32,7 +32,7 @@ export const FileList = ({ session }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session]); // Add session as dependency
+  }, [session?.user?.id]); // Add session.user.id as dependency to re-fetch when user changes
 
   const checkSpecialUser = async () => {
     try {
@@ -52,10 +52,14 @@ export const FileList = ({ session }) => {
   const fetchFiles = async () => {
     try {
       console.log('Fetching files...');
-      const { data, error } = await supabase
+      let query = supabase
         .from('files')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
+      
+      // If you want to show only the current user's files, uncomment the next line
+      // query = query.eq('user_id', session.user.id);
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching files:', error);
