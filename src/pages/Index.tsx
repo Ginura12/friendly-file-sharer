@@ -48,10 +48,17 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 p-4 md:p-8 transition-all duration-500">
       <div className="max-w-4xl mx-auto space-y-8">
         <Card className="w-full backdrop-blur-sm bg-white/90 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl border-t border-white/60">
-          <CardHeader className="flex flex-row items-center justify-between p-6">
-            <CardTitle className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-blue-600 to-purple-600 bg-clip-text text-transparent animate-fade-in">
-              Friendly File Sharer
-            </CardTitle>
+          <CardHeader className="flex flex-col md:flex-row items-center justify-between p-6 space-y-4 md:space-y-0">
+            <div className="flex items-center gap-4">
+              <img 
+                src="/lovable-uploads/1758877d-8277-4188-b9af-4c9cb01b38cf.png" 
+                alt="Logo" 
+                className="w-16 h-16 rounded-full border-2 border-primary/20 shadow-lg transition-transform duration-300 hover:scale-105"
+              />
+              <CardTitle className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-blue-600 to-purple-600 bg-clip-text text-transparent animate-fade-in">
+                Friendly File Sharer
+              </CardTitle>
+            </div>
             <div className="flex items-center gap-2">
               {session ? (
                 <>
