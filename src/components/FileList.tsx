@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { FileReply } from "./FileReply";
 import { FileReplies } from "./FileReplies";
 import { FilePreview } from "./FilePreview";
+import { FileReactions } from "./FileReactions";
 
 export const FileList = ({ session }) => {
   const [files, setFiles] = useState([]);
@@ -125,7 +126,7 @@ export const FileList = ({ session }) => {
             <p className="text-gray-500 text-center animate-pulse">No files uploaded yet</p>
           ) : (
             <div className="space-y-6">
-              {files.map((file, index) => (
+              {files.map((file) => (
                 <div 
                   key={file.id} 
                   className="space-y-4"
@@ -157,6 +158,7 @@ export const FileList = ({ session }) => {
                     </div>
                   </div>
                   <div className="pl-4 space-y-4">
+                    <FileReactions fileId={file.id} session={session} />
                     <FileReplies fileId={file.id} session={session} />
                     <FileReply 
                       fileId={file.id} 
