@@ -9,6 +9,7 @@ import { FileList } from "@/components/FileList";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, LogOut, LogIn } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { VoiceCall } from "@/components/VoiceCall";
 
 const Index = () => {
   const [session, setSession] = useState(null);
@@ -71,6 +72,12 @@ const Index = () => {
                       Chat Room
                     </Button>
                   </Link>
+                  {session?.user && (
+                    <VoiceCall 
+                      userId={session.user.id} 
+                      receiverId="some-receiver-id" // You'll need to implement user selection
+                    />
+                  )}
                   <Button 
                     variant="outline"
                     onClick={handleLogout}
