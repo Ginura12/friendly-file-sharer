@@ -63,19 +63,28 @@ export const FileReactions = ({ fileId, session }) => {
     }
 
     try {
-      if (userReactions.includes(reaction)) {
-        // Remove reaction
-        const { error } = await supabase
+      // First check if the reaction already exists
+      const { data: existingReaction } = await supabase
+        .from('file_reactions')
+        .select()
+        .eq('file_id', fileId)
+        .eq('user_id', session.user.id)
+        .eq('reaction', reaction)
+        .single();
+
+      if (existingReaction) {
+        // Remove reaction if it exists
+        const { error: deleteError } = await supabase
           .from('file_reactions')
           .delete()
           .eq('file_id', fileId)
           .eq('user_id', session.user.id)
           .eq('reaction', reaction);
 
-        if (error) throw error;
+        if (deleteError) throw deleteError;
       } else {
-        // Add reaction
-        const { error } = await supabase
+        // Add reaction if it doesn't exist
+        const { error: insertError } = await supabase
           .from('file_reactions')
           .insert({
             file_id: fileId,
@@ -83,8 +92,11 @@ export const FileReactions = ({ fileId, session }) => {
             reaction
           });
 
-        if (error) throw error;
+        if (insertError) throw insertError;
       }
+
+      // Fetch updated reactions
+      await fetchReactions();
     } catch (error) {
       console.error('Error toggling reaction:', error);
       toast({
