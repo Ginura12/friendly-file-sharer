@@ -11,28 +11,37 @@ export type Database = {
     Tables: {
       calls: {
         Row: {
+          answer_sdp: string | null
           caller_id: string
           created_at: string | null
           ended_at: string | null
+          ice_candidate: Json | null
           id: string
+          offer_sdp: string | null
           receiver_id: string
           started_at: string | null
           status: string
         }
         Insert: {
+          answer_sdp?: string | null
           caller_id: string
           created_at?: string | null
           ended_at?: string | null
+          ice_candidate?: Json | null
           id?: string
+          offer_sdp?: string | null
           receiver_id: string
           started_at?: string | null
           status: string
         }
         Update: {
+          answer_sdp?: string | null
           caller_id?: string
           created_at?: string | null
           ended_at?: string | null
+          ice_candidate?: Json | null
           id?: string
+          offer_sdp?: string | null
           receiver_id?: string
           started_at?: string | null
           status?: string

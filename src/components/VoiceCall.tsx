@@ -11,85 +11,46 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { UserSelector } from "./UserSelector";
+import { VideoStream } from "./VideoStream";
+import { WebRTCService } from "@/services/webRTCService";
+import { useCallState } from "@/hooks/useCallState";
 
 interface VoiceCallProps {
   userId: string;
 }
 
 export const VoiceCall = ({ userId }: VoiceCallProps) => {
-  const [callStatus, setCallStatus] = useState<string | null>(null);
-  const [callId, setCallId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [callId, setCallId] = useState<string | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  const peerConnection = useRef<RTCPeerConnection | null>(null);
+  const webRTCService = useRef<WebRTCService>(new WebRTCService());
   const { toast } = useToast();
+  const { callStatus, setCallStatus } = useCallState(callId, userId);
 
   useEffect(() => {
-    const channel = supabase
-      .channel('call-status')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'calls',
-          filter: `id=eq.${callId}`,
-        },
-        async (payload) => {
-          setCallStatus(payload.new.status);
-          
-          if (payload.new.status === 'active' && payload.new.caller_id !== userId) {
-            // Answer the call
-            await setupWebRTC();
-          } else if (payload.new.status === 'ended') {
-            cleanupWebRTC();
-            toast({
-              title: "Call Ended",
-              description: "The voice call has ended",
-            });
-          }
-        }
-      )
-      .subscribe();
-
     return () => {
-      supabase.removeChannel(channel);
-      cleanupWebRTC();
+      webRTCService.current.cleanup();
     };
-  }, [callId, userId, toast]);
+  }, []);
 
   const setupWebRTC = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: true 
-      });
+      const stream = await webRTCService.current.initialize();
       setLocalStream(stream);
 
-      const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-      });
-      peerConnection.current = pc;
-
-      stream.getTracks().forEach(track => {
-        pc.addTrack(track, stream);
+      webRTCService.current.onTrack((stream) => {
+        setRemoteStream(stream);
       });
 
-      pc.ontrack = (event) => {
-        setRemoteStream(event.streams[0]);
-      };
-
-      // Handle ICE candidates
-      pc.onicecandidate = async (event) => {
-        if (event.candidate) {
-          // Send ICE candidate to peer through Supabase
-          await supabase.from('calls').update({
-            ice_candidate: JSON.stringify(event.candidate)
-          }).eq('id', callId);
+      webRTCService.current.onIceCandidate(async (candidate) => {
+        if (callId) {
+          await supabase
+            .from('calls')
+            .update({ ice_candidate: candidate })
+            .eq('id', callId);
         }
-      };
-
+      });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -97,23 +58,6 @@ export const VoiceCall = ({ userId }: VoiceCallProps) => {
         variant: "destructive",
       });
     }
-  };
-
-  const cleanupWebRTC = () => {
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-      setLocalStream(null);
-    }
-    if (remoteStream) {
-      remoteStream.getTracks().forEach(track => track.stop());
-      setRemoteStream(null);
-    }
-    if (peerConnection.current) {
-      peerConnection.current.close();
-      peerConnection.current = null;
-    }
-    setCallId(null);
-    setCallStatus(null);
   };
 
   const startCall = async () => {
@@ -129,12 +73,15 @@ export const VoiceCall = ({ userId }: VoiceCallProps) => {
     try {
       await setupWebRTC();
       
+      const offer = await webRTCService.current.createOffer();
+      
       const { data, error } = await supabase
         .from('calls')
         .insert({
           caller_id: userId,
           receiver_id: selectedUserId,
           status: 'pending',
+          sdp_offer: offer
         })
         .select()
         .single();
@@ -149,7 +96,7 @@ export const VoiceCall = ({ userId }: VoiceCallProps) => {
         description: "Waiting for user to accept",
       });
     } catch (error: any) {
-      cleanupWebRTC();
+      webRTCService.current.cleanup();
       toast({
         title: "Error",
         description: error.message,
@@ -162,17 +109,26 @@ export const VoiceCall = ({ userId }: VoiceCallProps) => {
     if (!callId) return;
 
     try {
-      const { error } = await supabase
-        .from('calls')
-        .update({
-          status: 'active',
-          started_at: new Date().toISOString(),
-        })
-        .eq('id', callId);
-
-      if (error) throw error;
-
       await setupWebRTC();
+
+      const { data: callData } = await supabase
+        .from('calls')
+        .select('sdp_offer')
+        .eq('id', callId)
+        .single();
+
+      if (callData?.sdp_offer) {
+        const answer = await webRTCService.current.handleOffer(callData.sdp_offer);
+
+        await supabase
+          .from('calls')
+          .update({
+            status: 'active',
+            started_at: new Date().toISOString(),
+            sdp_answer: answer
+          })
+          .eq('id', callId);
+      }
       
       toast({
         title: "Call Accepted",
@@ -201,7 +157,11 @@ export const VoiceCall = ({ userId }: VoiceCallProps) => {
 
       if (error) throw error;
 
-      cleanupWebRTC();
+      webRTCService.current.cleanup();
+      setLocalStream(null);
+      setRemoteStream(null);
+      setCallId(null);
+      setCallStatus(null);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -282,25 +242,10 @@ export const VoiceCall = ({ userId }: VoiceCallProps) => {
       {(localStream || remoteStream) && (
         <div className="grid grid-cols-2 gap-4">
           {localStream && (
-            <video
-              autoPlay
-              playsInline
-              muted
-              ref={(video) => {
-                if (video) video.srcObject = localStream;
-              }}
-              className="w-full rounded-lg border"
-            />
+            <VideoStream stream={localStream} muted className="aspect-video" />
           )}
           {remoteStream && (
-            <video
-              autoPlay
-              playsInline
-              ref={(video) => {
-                if (video) video.srcObject = remoteStream;
-              }}
-              className="w-full rounded-lg border"
-            />
+            <VideoStream stream={remoteStream} className="aspect-video" />
           )}
         </div>
       )}
