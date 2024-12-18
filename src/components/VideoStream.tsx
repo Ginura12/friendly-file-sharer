@@ -1,12 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 interface VideoStreamProps {
-  stream: MediaStream | null;
+  stream: MediaStream;
   muted?: boolean;
   className?: string;
 }
 
-export const VideoStream = ({ stream, muted = false, className = '' }: VideoStreamProps) => {
+export const VideoStream = ({ stream, muted = false, className = "" }: VideoStreamProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export const VideoStream = ({ stream, muted = false, className = '' }: VideoStre
       autoPlay
       playsInline
       muted={muted}
-      className={`w-full rounded-lg border ${className}`}
+      className={className}
     />
   );
 };
