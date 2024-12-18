@@ -81,7 +81,7 @@ export const VoiceCall = ({ userId }: VoiceCallProps) => {
           caller_id: userId,
           receiver_id: selectedUserId,
           status: 'pending',
-          sdp_offer: offer
+          offer_sdp: offer
         })
         .select()
         .single();
@@ -113,19 +113,19 @@ export const VoiceCall = ({ userId }: VoiceCallProps) => {
 
       const { data: callData } = await supabase
         .from('calls')
-        .select('sdp_offer')
+        .select('offer_sdp')
         .eq('id', callId)
         .single();
 
-      if (callData?.sdp_offer) {
-        const answer = await webRTCService.current.handleOffer(callData.sdp_offer);
+      if (callData?.offer_sdp) {
+        const answer = await webRTCService.current.handleOffer(callData.offer_sdp);
 
         await supabase
           .from('calls')
           .update({
             status: 'active',
             started_at: new Date().toISOString(),
-            sdp_answer: answer
+            answer_sdp: answer
           })
           .eq('id', callId);
       }

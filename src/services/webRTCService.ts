@@ -5,18 +5,15 @@ export class WebRTCService {
 
   async initialize() {
     try {
-      // Create a new RTCPeerConnection with STUN server
       this.peerConnection = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
       });
 
-      // Get local media stream (video and audio)
       this.localStream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true
       });
 
-      // Add local tracks to peer connection
       this.localStream.getTracks().forEach(track => {
         if (this.peerConnection && this.localStream) {
           this.peerConnection.addTrack(track, this.localStream);
@@ -37,34 +34,36 @@ export class WebRTCService {
       const offer = await this.peerConnection.createOffer();
       await this.peerConnection.setLocalDescription(offer);
       
-      return offer;
+      return JSON.stringify(offer);
     } catch (error) {
       console.error('Error creating offer:', error);
       throw error;
     }
   }
 
-  async handleAnswer(answer: RTCSessionDescriptionInit) {
+  async handleAnswer(answer: string) {
     try {
       if (!this.peerConnection) throw new Error('PeerConnection not initialized');
       
-      await this.peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+      const parsedAnswer = JSON.parse(answer);
+      await this.peerConnection.setRemoteDescription(new RTCSessionDescription(parsedAnswer));
     } catch (error) {
       console.error('Error handling answer:', error);
       throw error;
     }
   }
 
-  async handleOffer(offer: RTCSessionDescriptionInit) {
+  async handleOffer(offer: string) {
     try {
       if (!this.peerConnection) throw new Error('PeerConnection not initialized');
       
-      await this.peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      const parsedOffer = JSON.parse(offer);
+      await this.peerConnection.setRemoteDescription(new RTCSessionDescription(parsedOffer));
       
       const answer = await this.peerConnection.createAnswer();
       await this.peerConnection.setLocalDescription(answer);
       
-      return answer;
+      return JSON.stringify(answer);
     } catch (error) {
       console.error('Error handling offer:', error);
       throw error;
@@ -80,21 +79,22 @@ export class WebRTCService {
     };
   }
 
-  onIceCandidate(callback: (candidate: RTCIceCandidate) => void) {
+  onIceCandidate(callback: (candidate: string) => void) {
     if (!this.peerConnection) throw new Error('PeerConnection not initialized');
     
     this.peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
-        callback(event.candidate);
+        callback(JSON.stringify(event.candidate));
       }
     };
   }
 
-  async addIceCandidate(candidate: RTCIceCandidateInit) {
+  async addIceCandidate(candidate: string) {
     try {
       if (!this.peerConnection) throw new Error('PeerConnection not initialized');
       
-      await this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+      const parsedCandidate = JSON.parse(candidate);
+      await this.peerConnection.addIceCandidate(new RTCIceCandidate(parsedCandidate));
     } catch (error) {
       console.error('Error adding ICE candidate:', error);
       throw error;
@@ -102,13 +102,11 @@ export class WebRTCService {
   }
 
   cleanup() {
-    // Stop all tracks in local stream
     if (this.localStream) {
       this.localStream.getTracks().forEach(track => track.stop());
       this.localStream = null;
     }
 
-    // Close peer connection
     if (this.peerConnection) {
       this.peerConnection.close();
       this.peerConnection = null;
