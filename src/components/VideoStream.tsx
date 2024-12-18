@@ -21,7 +21,7 @@ export const VideoStream = ({ stream, muted = false, className = "" }: VideoStre
       autoPlay
       playsInline
       muted={muted}
-      className={className}
+      className={`w-full h-full min-h-[300px] object-cover rounded-lg border border-gray-200 ${className}`}
     />
   );
 };

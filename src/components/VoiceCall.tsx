@@ -8,12 +8,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { UserSelector } from "./UserSelector";
 import { VideoStream } from "./VideoStream";
 import { WebRTCService } from "@/services/webRTCService";
 import { useCallState } from "@/hooks/useCallState";
+import { CallNotification } from "./CallNotification";
 
 interface VoiceCallProps {
   userId: string;
@@ -27,6 +29,16 @@ export const VoiceCall = ({ userId }: VoiceCallProps) => {
   const webRTCService = useRef<WebRTCService>(new WebRTCService());
   const { toast } = useToast();
   const { callStatus, setCallStatus } = useCallState(callId, userId);
+
+  const handleAcceptCall = async (incomingCallId: string) => {
+    setCallId(incomingCallId);
+    await acceptCall();
+  };
+
+  const handleDeclineCall = async (incomingCallId: string) => {
+    setCallId(incomingCallId);
+    await endCall();
+  };
 
   useEffect(() => {
     return () => {
@@ -173,6 +185,12 @@ export const VoiceCall = ({ userId }: VoiceCallProps) => {
 
   return (
     <div className="space-y-4">
+      <CallNotification
+        userId={userId}
+        onAcceptCall={handleAcceptCall}
+        onDeclineCall={handleDeclineCall}
+      />
+
       <Dialog>
         <DialogTrigger asChild>
           <Button variant="outline" className="gap-2">
@@ -180,9 +198,12 @@ export const VoiceCall = ({ userId }: VoiceCallProps) => {
             Select User
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Select a User to Call</DialogTitle>
+            <DialogDescription>
+              Choose a user from the list below to start a video call.
+            </DialogDescription>
           </DialogHeader>
           <UserSelector
             currentUserId={userId}
@@ -240,12 +261,16 @@ export const VoiceCall = ({ userId }: VoiceCallProps) => {
       </div>
 
       {(localStream || remoteStream) && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[600px]">
           {localStream && (
-            <VideoStream stream={localStream} muted className="aspect-video" />
+            <div className="relative w-full h-full min-h-[300px]">
+              <VideoStream stream={localStream} muted className="absolute inset-0" />
+            </div>
           )}
           {remoteStream && (
-            <VideoStream stream={remoteStream} className="aspect-video" />
+            <div className="relative w-full h-full min-h-[300px]">
+              <VideoStream stream={remoteStream} className="absolute inset-0" />
+            </div>
           )}
         </div>
       )}
