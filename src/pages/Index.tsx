@@ -73,10 +73,7 @@ const Index = () => {
                     </Button>
                   </Link>
                   {session?.user && (
-                    <VoiceCall 
-                      userId={session.user.id} 
-                      receiverId="some-receiver-id" // You'll need to implement user selection
-                    />
+                    <VoiceCall userId={session.user.id} />
                   )}
                   <Button 
                     variant="outline"
