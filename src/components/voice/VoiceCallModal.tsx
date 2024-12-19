@@ -49,10 +49,18 @@ export const VoiceCallModal = ({ isOpen, onClose, receiverId, receiverName, sess
 
       pc.onicecandidate = async (event) => {
         if (event.candidate && callId) {
+          // Convert RTCIceCandidate to a plain object
+          const candidateObj = {
+            candidate: event.candidate.candidate,
+            sdpMLineIndex: event.candidate.sdpMLineIndex,
+            sdpMid: event.candidate.sdpMid,
+            usernameFragment: event.candidate.usernameFragment
+          };
+
           await supabase
             .from('calls')
             .update({
-              ice_candidate: event.candidate
+              ice_candidate: candidateObj
             })
             .eq('id', callId);
         }
