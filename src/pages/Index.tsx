@@ -9,7 +9,6 @@ import { FileList } from "@/components/FileList";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, LogOut, LogIn, Settings } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { VoiceCall } from "@/components/VoiceCall";
 import { UserProfile } from "@/components/UserProfile";
 import {
   Sheet,
@@ -81,26 +80,23 @@ const Index = () => {
                     </Button>
                   </Link>
                   {session?.user && (
-                    <>
-                      <VoiceCall userId={session.user.id} />
-                      <Sheet>
-                        <SheetTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="gap-2 transition-all duration-300 hover:scale-105"
-                          >
-                            <Settings className="h-4 w-4" />
-                            Profile
-                          </Button>
-                        </SheetTrigger>
-                        <SheetContent>
-                          <SheetHeader>
-                            <SheetTitle>Profile Settings</SheetTitle>
-                          </SheetHeader>
-                          <UserProfile session={session} />
-                        </SheetContent>
-                      </Sheet>
-                    </>
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="gap-2 transition-all duration-300 hover:scale-105"
+                        >
+                          <Settings className="h-4 w-4" />
+                          Profile
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent>
+                        <SheetHeader>
+                          <SheetTitle>Profile Settings</SheetTitle>
+                        </SheetHeader>
+                        <UserProfile session={session} />
+                      </SheetContent>
+                    </Sheet>
                   )}
                   <Button 
                     variant="outline"
