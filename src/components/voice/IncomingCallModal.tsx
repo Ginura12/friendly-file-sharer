@@ -181,3 +181,4 @@ export const IncomingCallModal = ({ isOpen, onClose, call, callerName }: Incomin
       </DialogContent>
     </Dialog>
   );
+};
