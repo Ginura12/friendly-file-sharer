@@ -7,9 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileUploader } from "@/components/FileUploader";
 import { FileList } from "@/components/FileList";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, LogIn, Settings } from "lucide-react";
+import { MessageCircle, LogOut, LogIn, Settings, Phone } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { UserProfile } from "@/components/UserProfile";
+import { VoiceCallModal } from "@/components/voice/VoiceCallModal";
+import { IncomingCallModal } from "@/components/voice/IncomingCallModal";
 import {
   Sheet,
   SheetContent,
@@ -17,9 +19,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Index = () => {
   const [session, setSession] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [incomingCall, setIncomingCall] = useState(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -36,6 +48,63 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (session) {
+      // Fetch online users
+      fetchUsers();
+      // Listen for incoming calls
+      listenForCalls();
+    }
+  }, [session]);
+
+  const fetchUsers = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .neq('id', session?.user?.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch users",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUsers(data || []);
+  };
+
+  const listenForCalls = () => {
+    const channel = supabase
+      .channel('calls')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'calls',
+          filter: `receiver_id=eq.${session?.user?.id}`,
+        },
+        async (payload) => {
+          const { data: caller } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', payload.new.caller_id)
+            .single();
+
+          if (payload.new.status === 'calling') {
+            setIncomingCall({ ...payload.new, callerName: caller?.username });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -50,6 +119,11 @@ const Index = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const initiateCall = (user) => {
+    setSelectedUser(user);
+    setIsCallModalOpen(true);
   };
 
   return (
@@ -79,6 +153,27 @@ const Index = () => {
                       Chat Room
                     </Button>
                   </Link>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="gap-2 transition-all duration-300 hover:scale-105"
+                      >
+                        <Phone className="h-4 w-4" />
+                        Call
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      {users.map((user) => (
+                        <DropdownMenuItem
+                          key={user.id}
+                          onClick={() => initiateCall(user)}
+                        >
+                          {user.username || user.email}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   {session?.user && (
                     <Sheet>
                       <SheetTrigger asChild>
@@ -157,6 +252,28 @@ const Index = () => {
           </CardContent>
         </Card>
       </div>
+
+      {selectedUser && (
+        <VoiceCallModal
+          isOpen={isCallModalOpen}
+          onClose={() => {
+            setIsCallModalOpen(false);
+            setSelectedUser(null);
+          }}
+          receiverId={selectedUser.id}
+          receiverName={selectedUser.username || selectedUser.email}
+          session={session}
+        />
+      )}
+
+      {incomingCall && (
+        <IncomingCallModal
+          isOpen={true}
+          onClose={() => setIncomingCall(null)}
+          call={incomingCall}
+          callerName={incomingCall.callerName}
+        />
+      )}
     </div>
   );
 };
