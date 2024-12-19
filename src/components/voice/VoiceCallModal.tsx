@@ -13,6 +13,9 @@ interface VoiceCallModalProps {
   session: any;
 }
 
+// Define valid call statuses
+type CallStatus = 'pending' | 'calling' | 'connected' | 'ended' | 'rejected';
+
 export const VoiceCallModal = ({ isOpen, onClose, receiverId, receiverName, session }: VoiceCallModalProps) => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
@@ -84,17 +87,18 @@ export const VoiceCallModal = ({ isOpen, onClose, receiverId, receiverName, sess
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const { data: { id } } = await supabase
+      const { data: { id }, error } = await supabase
         .from('calls')
         .insert({
           caller_id: session.user.id,
           receiver_id: receiverId,
-          status: 'calling',
+          status: 'pending' as CallStatus, // Use a valid status
           offer_sdp: offer.sdp
         })
         .select('id')
         .single();
 
+      if (error) throw error;
       setCallId(id);
 
       // Subscribe to changes for answer

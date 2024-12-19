@@ -12,6 +12,8 @@ interface IncomingCallModalProps {
   callerName: string;
 }
 
+type CallStatus = 'pending' | 'calling' | 'connected' | 'ended' | 'rejected';
+
 export const IncomingCallModal = ({ isOpen, onClose, call, callerName }: IncomingCallModalProps) => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [peerConnection, setPeerConnection] = useState<RTCPeerConnection | null>(null);
@@ -88,7 +90,7 @@ export const IncomingCallModal = ({ isOpen, onClose, call, callerName }: Incomin
       await supabase
         .from('calls')
         .update({
-          status: 'connected',
+          status: 'connected' as CallStatus,
           answer_sdp: answer.sdp,
           started_at: new Date().toISOString()
         })
@@ -132,7 +134,7 @@ export const IncomingCallModal = ({ isOpen, onClose, call, callerName }: Incomin
     await supabase
       .from('calls')
       .update({
-        status: 'rejected',
+        status: 'rejected' as CallStatus,
         ended_at: new Date().toISOString()
       })
       .eq('id', call.id);
