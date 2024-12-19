@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Phone, PhoneOff } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { CALL_STATUSES } from './types';
 
 interface IncomingCallModalProps {
   isOpen: boolean;
@@ -11,8 +12,6 @@ interface IncomingCallModalProps {
   call: any;
   callerName: string;
 }
-
-type CallStatus = 'pending' | 'calling' | 'connected' | 'ended' | 'rejected';
 
 export const IncomingCallModal = ({ isOpen, onClose, call, callerName }: IncomingCallModalProps) => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -43,7 +42,6 @@ export const IncomingCallModal = ({ isOpen, onClose, call, callerName }: Incomin
 
       pc.onicecandidate = async (event) => {
         if (event.candidate) {
-          // Convert RTCIceCandidate to a plain object
           const candidateObj = {
             candidate: event.candidate.candidate,
             sdpMLineIndex: event.candidate.sdpMLineIndex,
@@ -62,7 +60,6 @@ export const IncomingCallModal = ({ isOpen, onClose, call, callerName }: Incomin
 
       setPeerConnection(pc);
 
-      // Set up remote description from offer
       const offer = new RTCSessionDescription({
         type: 'offer',
         sdp: call.offer_sdp
@@ -90,13 +87,12 @@ export const IncomingCallModal = ({ isOpen, onClose, call, callerName }: Incomin
       await supabase
         .from('calls')
         .update({
-          status: 'connected' as CallStatus,
+          status: CALL_STATUSES.CONNECTED,
           answer_sdp: answer.sdp,
           started_at: new Date().toISOString()
         })
         .eq('id', call.id);
 
-      // Subscribe to call status changes
       const channel = supabase
         .channel(`call-${call.id}`)
         .on(
@@ -108,7 +104,7 @@ export const IncomingCallModal = ({ isOpen, onClose, call, callerName }: Incomin
             filter: `id=eq.${call.id}`
           },
           async (payload) => {
-            if (payload.new.status === 'ended') {
+            if (payload.new.status === CALL_STATUSES.ENDED) {
               cleanupCall();
               onClose();
             }
@@ -134,7 +130,7 @@ export const IncomingCallModal = ({ isOpen, onClose, call, callerName }: Incomin
     await supabase
       .from('calls')
       .update({
-        status: 'rejected' as CallStatus,
+        status: CALL_STATUSES.REJECTED,
         ended_at: new Date().toISOString()
       })
       .eq('id', call.id);
@@ -185,4 +181,3 @@ export const IncomingCallModal = ({ isOpen, onClose, call, callerName }: Incomin
       </DialogContent>
     </Dialog>
   );
-};

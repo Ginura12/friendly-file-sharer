@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Phone, PhoneOff, Mic, MicOff } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { CALL_STATUSES, CallStatus } from './types';
 
 interface VoiceCallModalProps {
   isOpen: boolean;
@@ -12,9 +13,6 @@ interface VoiceCallModalProps {
   receiverName: string;
   session: any;
 }
-
-// Define valid call statuses
-type CallStatus = 'pending' | 'calling' | 'connected' | 'ended' | 'rejected';
 
 export const VoiceCallModal = ({ isOpen, onClose, receiverId, receiverName, session }: VoiceCallModalProps) => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -52,7 +50,6 @@ export const VoiceCallModal = ({ isOpen, onClose, receiverId, receiverName, sess
 
       pc.onicecandidate = async (event) => {
         if (event.candidate && callId) {
-          // Convert RTCIceCandidate to a plain object
           const candidateObj = {
             candidate: event.candidate.candidate,
             sdpMLineIndex: event.candidate.sdpMLineIndex,
@@ -92,7 +89,7 @@ export const VoiceCallModal = ({ isOpen, onClose, receiverId, receiverName, sess
         .insert({
           caller_id: session.user.id,
           receiver_id: receiverId,
-          status: 'pending' as CallStatus, // Use a valid status
+          status: CALL_STATUSES.PENDING,
           offer_sdp: offer.sdp
         })
         .select('id')
@@ -101,7 +98,6 @@ export const VoiceCallModal = ({ isOpen, onClose, receiverId, receiverName, sess
       if (error) throw error;
       setCallId(id);
 
-      // Subscribe to changes for answer
       const channel = supabase
         .channel(`call-${id}`)
         .on(
@@ -121,7 +117,7 @@ export const VoiceCallModal = ({ isOpen, onClose, receiverId, receiverName, sess
               await pc.setRemoteDescription(answer);
             }
 
-            if (payload.new.status === 'ended') {
+            if (payload.new.status === CALL_STATUSES.ENDED) {
               cleanupCall();
               onClose();
             }
@@ -157,7 +153,7 @@ export const VoiceCallModal = ({ isOpen, onClose, receiverId, receiverName, sess
       await supabase
         .from('calls')
         .update({
-          status: 'ended',
+          status: CALL_STATUSES.ENDED,
           ended_at: new Date().toISOString()
         })
         .eq('id', callId);
