@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { GroupDetails } from "@/components/GroupDetails";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ import { UserPlus } from "lucide-react";
 export const GroupManagement = ({ session, isSpecialUser }) => {
   const [groupName, setGroupName] = useState("");
   const [description, setDescription] = useState("");
+  const [newGroupId, setNewGroupId] = useState(null);
   const { toast } = useToast();
 
   const createGroup = async (e: React.FormEvent) => {
@@ -22,13 +24,15 @@ export const GroupManagement = ({ session, isSpecialUser }) => {
     if (!groupName.trim()) return;
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('groups')
         .insert({
           name: groupName.trim(),
           description: description.trim(),
           created_by: session.user.id
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -36,6 +40,10 @@ export const GroupManagement = ({ session, isSpecialUser }) => {
         title: "Success",
         description: "Group created successfully",
       });
+      
+      // Set the new group ID to trigger the GroupDetails dialog
+      setNewGroupId(data.id);
+      
       setGroupName("");
       setDescription("");
     } catch (error) {
@@ -51,37 +59,41 @@ export const GroupManagement = ({ session, isSpecialUser }) => {
   if (!isSpecialUser) return null;
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button 
-          variant="outline" 
-          className="gap-2 transition-all duration-300 hover:scale-105"
-        >
-          <UserPlus className="h-4 w-4" />
-          Create Group
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create New Group</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={createGroup} className="space-y-4">
-          <div>
-            <Input
-              placeholder="Group Name"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-              className="mb-2"
-            />
-            <Input
-              placeholder="Description (optional)"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-          <Button type="submit" className="w-full">Create Group</Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button 
+            variant="outline" 
+            className="gap-2 transition-all duration-300 hover:scale-105"
+          >
+            <UserPlus className="h-4 w-4" />
+            Create Group
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Group</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={createGroup} className="space-y-4">
+            <div>
+              <Input
+                placeholder="Group Name"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                className="mb-2"
+              />
+              <Input
+                placeholder="Description (optional)"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+            <Button type="submit" className="w-full">Create Group</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {newGroupId && <GroupDetails groupId={newGroupId} />}
+    </>
   );
 };
