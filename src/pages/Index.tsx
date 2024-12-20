@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { MessageCircle, LogOut, LogIn, Settings } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { UserProfile } from "@/components/UserProfile";
+import { GroupManagement } from "@/components/GroupManagement";
+import { GroupSelector } from "@/components/GroupSelector";
 import {
   Sheet,
   SheetContent,
@@ -20,21 +22,43 @@ import {
 
 const Index = () => {
   const [session, setSession] = useState(null);
+  const [isSpecialUser, setIsSpecialUser] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session?.user) {
+        checkSpecialUser(session.user.id);
+      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user) {
+        checkSpecialUser(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkSpecialUser = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('special_users')
+        .select()
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      setIsSpecialUser(data && data.length > 0);
+    } catch (error) {
+      console.error('Error checking special user status:', error);
+      setIsSpecialUser(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -50,6 +74,11 @@ const Index = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleGroupSelect = (groupId) => {
+    // Refresh the file list when group changes
+    // The FileList component will handle filtering by group
   };
 
   return (
@@ -121,6 +150,12 @@ const Index = () => {
                 )}
               </div>
             </div>
+            {session && (
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <GroupSelector session={session} onGroupSelect={handleGroupSelect} />
+                <GroupManagement session={session} isSpecialUser={isSpecialUser} />
+              </div>
+            )}
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
             {!session ? (

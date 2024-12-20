@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Upload } from "lucide-react";
@@ -8,7 +8,29 @@ import { Upload } from "lucide-react";
 export const FileUploader = ({ session }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [userGroupId, setUserGroupId] = useState(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchUserGroup();
+    }
+  }, [session?.user]);
+
+  const fetchUserGroup = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('group_id')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error) throw error;
+      setUserGroupId(data?.group_id);
+    } catch (error) {
+      console.error('Error fetching user group:', error);
+    }
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -45,7 +67,8 @@ export const FileUploader = ({ session }) => {
           size: selectedFile.size,
           type: selectedFile.type,
           url: publicUrl,
-          user_id: session.user.id
+          user_id: session.user.id,
+          group_id: userGroupId
         });
 
       if (dbError) throw dbError;
