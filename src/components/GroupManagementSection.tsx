@@ -29,20 +29,17 @@ export const GroupManagementSection = ({ session }) => {
     }
   };
 
-  const handleGroupSelect = (groupId) => {
-    // Refresh the file list when group changes
-    // The FileList component will handle filtering by group
-  };
-
   return (
-    <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-      <GroupSelector session={session} onGroupSelect={handleGroupSelect} />
-      <div className="flex gap-2 items-center">
-        <GroupJoin session={session} />
-        {isExpertUser && (
-          <GroupManagement session={session} isSpecialUser={true} />
-        )}
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <GroupSelector session={session} />
+        {!isExpertUser && <GroupJoin session={session} />}
       </div>
+      {isExpertUser && (
+        <div className="mt-4">
+          <GroupManagement session={session} isSpecialUser={true} />
+        </div>
+      )}
     </div>
   );
 };

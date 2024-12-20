@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
@@ -11,20 +11,62 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { UserPlus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserPlus, Copy } from "lucide-react";
 
 export const GroupManagement = ({ session, isSpecialUser }) => {
   const [groupName, setGroupName] = useState("");
   const [description, setDescription] = useState("");
   const [newGroupId, setNewGroupId] = useState(null);
+  const [managedGroups, setManagedGroups] = useState([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (isSpecialUser) {
+      fetchManagedGroups();
+    }
+  }, [isSpecialUser]);
+
+  const fetchManagedGroups = async () => {
+    try {
+      const { data: groups, error } = await supabase
+        .from('groups')
+        .select('*')
+        .eq('created_by', session.user.id);
+
+      if (error) throw error;
+      setManagedGroups(groups || []);
+    } catch (error) {
+      console.error('Error fetching managed groups:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch managed groups",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Success",
+        description: "Copied to clipboard!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to copy text",
+        variant: "destructive",
+      });
+    }
+  };
 
   const createGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!groupName.trim()) return;
 
     try {
-      // Start a Supabase transaction by creating the group first
       const { data: groupData, error: groupError } = await supabase
         .from('groups')
         .insert({
@@ -62,11 +104,10 @@ export const GroupManagement = ({ session, isSpecialUser }) => {
         description: "Group created successfully",
       });
       
-      // Set the new group ID to trigger the GroupDetails dialog
       setNewGroupId(groupData.id);
-      
       setGroupName("");
       setDescription("");
+      fetchManagedGroups();
     } catch (error) {
       console.error('Error creating group:', error);
       toast({
@@ -113,6 +154,38 @@ export const GroupManagement = ({ session, isSpecialUser }) => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {managedGroups.length > 0 && (
+        <div className="mt-4 space-y-4">
+          <h3 className="text-lg font-semibold">Managed Groups</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            {managedGroups.map((group) => (
+              <Card key={group.id} className="shadow-md hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-lg">{group.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {group.description && (
+                    <p className="text-sm text-gray-500 mb-2">{group.description}</p>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                      {group.join_code}
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard(group.join_code)}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {newGroupId && <GroupDetails groupId={newGroupId} />}
     </>
