@@ -2,84 +2,28 @@ import { useEffect, useState } from "react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileUploader } from "@/components/FileUploader";
 import { FileList } from "@/components/FileList";
-import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, LogIn, Settings } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { UserProfile } from "@/components/UserProfile";
-import { GroupManagement } from "@/components/GroupManagement";
-import { GroupSelector } from "@/components/GroupSelector";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { HeaderActions } from "@/components/HeaderActions";
+import { GroupManagementSection } from "@/components/GroupManagementSection";
 
 const Index = () => {
   const [session, setSession] = useState(null);
-  const [isSpecialUser, setIsSpecialUser] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session?.user) {
-        checkSpecialUser(session.user.id);
-      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session?.user) {
-        checkSpecialUser(session.user.id);
-      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const checkSpecialUser = async (userId) => {
-    try {
-      const { data, error } = await supabase
-        .from('special_users')
-        .select()
-        .eq('user_id', userId);
-
-      if (error) throw error;
-      setIsSpecialUser(data && data.length > 0);
-    } catch (error) {
-      console.error('Error checking special user status:', error);
-      setIsSpecialUser(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Success",
-        description: "Logged out successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to log out",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleGroupSelect = (groupId) => {
-    // Refresh the file list when group changes
-    // The FileList component will handle filtering by group
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 p-2 sm:p-4 md:p-8 transition-all duration-500">
@@ -98,64 +42,10 @@ const Index = () => {
                 </CardTitle>
               </div>
               <div className="flex flex-wrap justify-center sm:justify-end items-center gap-2">
-                {session ? (
-                  <>
-                    <Link to="/chat" className="animate-fade-in">
-                      <Button 
-                        variant="outline" 
-                        className="group gap-2 transition-all duration-300 hover:scale-105 hover:bg-primary hover:text-white"
-                      >
-                        <MessageCircle className="h-4 w-4 transition-transform group-hover:rotate-12" />
-                        <span className="hidden sm:inline">Chat Room</span>
-                      </Button>
-                    </Link>
-                    {session?.user && (
-                      <Sheet>
-                        <SheetTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="gap-2 transition-all duration-300 hover:scale-105"
-                          >
-                            <Settings className="h-4 w-4" />
-                            <span className="hidden sm:inline">Profile</span>
-                          </Button>
-                        </SheetTrigger>
-                        <SheetContent>
-                          <SheetHeader>
-                            <SheetTitle>Profile Settings</SheetTitle>
-                          </SheetHeader>
-                          <UserProfile session={session} />
-                        </SheetContent>
-                      </Sheet>
-                    )}
-                    <Button 
-                      variant="outline"
-                      onClick={handleLogout}
-                      className="gap-2 transition-all duration-300 hover:scale-105 hover:bg-destructive hover:text-white"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span className="hidden sm:inline">Logout</span>
-                    </Button>
-                  </>
-                ) : (
-                  <Link to="/auth" className="animate-fade-in">
-                    <Button 
-                      variant="outline" 
-                      className="gap-2 transition-all duration-300 hover:scale-105 hover:bg-primary hover:text-white"
-                    >
-                      <LogIn className="h-4 w-4" />
-                      <span className="hidden sm:inline">Login / Sign Up</span>
-                    </Button>
-                  </Link>
-                )}
+                <HeaderActions session={session} />
               </div>
             </div>
-            {session && (
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                <GroupSelector session={session} onGroupSelect={handleGroupSelect} />
-                <GroupManagement session={session} isSpecialUser={isSpecialUser} />
-              </div>
-            )}
+            {session && <GroupManagementSection session={session} />}
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
             {!session ? (
