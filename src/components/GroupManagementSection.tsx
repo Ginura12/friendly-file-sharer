@@ -29,10 +29,15 @@ export const GroupManagementSection = ({ session }) => {
     }
   };
 
+  const handleGroupSelect = async (groupId) => {
+    // This function will be called when a group is selected
+    console.log('Group selected:', groupId);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <GroupSelector session={session} />
+        <GroupSelector session={session} onGroupSelect={handleGroupSelect} />
         {!isExpertUser && <GroupJoin session={session} />}
       </div>
       {isExpertUser && (
