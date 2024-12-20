@@ -57,12 +57,28 @@ export const GroupSelector = ({ session, onGroupSelect }) => {
     if (!checkRateLimit()) return;
 
     try {
-      const { data, error } = await supabase
-        .from('groups')
-        .select('*');
+      // First fetch groups where user is a member
+      const { data: memberGroups, error: memberError } = await supabase
+        .from('group_members')
+        .select('group_id')
+        .eq('user_id', session.user.id);
 
-      if (error) throw error;
-      setGroups(data || []);
+      if (memberError) throw memberError;
+
+      // Then fetch the actual group details
+      const groupIds = memberGroups.map(mg => mg.group_id);
+      
+      if (groupIds.length > 0) {
+        const { data: groupsData, error: groupsError } = await supabase
+          .from('groups')
+          .select('*')
+          .in('id', groupIds);
+
+        if (groupsError) throw groupsError;
+        setGroups(groupsData || []);
+      } else {
+        setGroups([]);
+      }
     } catch (error) {
       console.error('Error fetching groups:', error);
       toast({
