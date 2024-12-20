@@ -144,6 +144,7 @@ export type Database = {
       files: {
         Row: {
           created_at: string
+          group_id: string | null
           id: string
           name: string
           size: number
@@ -153,6 +154,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          group_id?: string | null
           id?: string
           name: string
           size: number
@@ -162,6 +164,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          group_id?: string | null
           id?: string
           name?: string
           size?: number
@@ -171,8 +174,83 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "files_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "files_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_admins: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_admins_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_admins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -183,6 +261,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          group_id: string | null
           id: string
           image_url: string | null
           sender_id: string
@@ -190,6 +269,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          group_id?: string | null
           id?: string
           image_url?: string | null
           sender_id: string
@@ -197,11 +277,19 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          group_id?: string | null
           id?: string
           image_url?: string | null
           sender_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_sender_id_fkey"
             columns: ["sender_id"]
@@ -253,6 +341,7 @@ export type Database = {
           bio: string | null
           created_at: string
           email: string | null
+          group_id: string | null
           id: string
           preferences: Json | null
           theme: string | null
@@ -264,6 +353,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email?: string | null
+          group_id?: string | null
           id: string
           preferences?: Json | null
           theme?: string | null
@@ -275,13 +365,22 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email?: string | null
+          group_id?: string | null
           id?: string
           preferences?: Json | null
           theme?: string | null
           updated_at?: string | null
           username?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       special_users: {
         Row: {
