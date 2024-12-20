@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,7 +24,8 @@ export const GroupManagement = ({ session, isSpecialUser }) => {
     if (!groupName.trim()) return;
 
     try {
-      const { data, error } = await supabase
+      // Start a Supabase transaction by creating the group first
+      const { data: groupData, error: groupError } = await supabase
         .from('groups')
         .insert({
           name: groupName.trim(),
@@ -34,7 +35,27 @@ export const GroupManagement = ({ session, isSpecialUser }) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (groupError) throw groupError;
+
+      // Add the creator as a group member
+      const { error: memberError } = await supabase
+        .from('group_members')
+        .insert({
+          group_id: groupData.id,
+          user_id: session.user.id
+        });
+
+      if (memberError) throw memberError;
+
+      // Add the creator as a group admin
+      const { error: adminError } = await supabase
+        .from('group_admins')
+        .insert({
+          group_id: groupData.id,
+          user_id: session.user.id
+        });
+
+      if (adminError) throw adminError;
 
       toast({
         title: "Success",
@@ -42,7 +63,7 @@ export const GroupManagement = ({ session, isSpecialUser }) => {
       });
       
       // Set the new group ID to trigger the GroupDetails dialog
-      setNewGroupId(data.id);
+      setNewGroupId(groupData.id);
       
       setGroupName("");
       setDescription("");
