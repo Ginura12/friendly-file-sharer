@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export const GroupJoin = ({ session }) => {
@@ -35,12 +35,10 @@ export const GroupJoin = ({ session }) => {
 
     setLoading(true);
     try {
-      console.log('Attempting to join group with code:', trimmedCode);
-      
       // First, verify the group exists and get its details
       const { data: group, error: groupError } = await supabase
         .from('groups')
-        .select('id, name, created_by')
+        .select('id, name')
         .eq('join_code', trimmedCode)
         .maybeSingle();
 
@@ -50,11 +48,8 @@ export const GroupJoin = ({ session }) => {
       }
 
       if (!group) {
-        console.log('No group found with code:', trimmedCode);
-        throw new Error("This group code is not valid or has expired. Please check with the group admin.");
+        throw new Error("Invalid group code. Please check with your group admin.");
       }
-
-      console.log('Found group:', group);
 
       // Check if user is already a member
       const { data: existingMembership, error: membershipError } = await supabase
