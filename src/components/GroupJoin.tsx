@@ -11,7 +11,9 @@ export const GroupJoin = ({ session }) => {
 
   const handleJoinGroup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!groupCode.trim()) {
+    const trimmedCode = groupCode.trim();
+    
+    if (!trimmedCode) {
       toast({
         title: "Error",
         description: "Please enter a group code",
@@ -20,15 +22,26 @@ export const GroupJoin = ({ session }) => {
       return;
     }
 
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(trimmedCode)) {
+      toast({
+        title: "Error",
+        description: "Invalid group code format",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      console.log('Attempting to join group with code:', groupCode.trim());
+      console.log('Attempting to join group with code:', trimmedCode);
       
       // First, verify the group exists
       const { data: group, error: groupError } = await supabase
         .from('groups')
         .select('id, name')
-        .eq('join_code', groupCode.trim())
+        .eq('join_code', trimmedCode)
         .maybeSingle();
 
       if (groupError) {
@@ -37,8 +50,8 @@ export const GroupJoin = ({ session }) => {
       }
 
       if (!group) {
-        console.log('No group found with code:', groupCode.trim());
-        throw new Error("Invalid group code");
+        console.log('No group found with code:', trimmedCode);
+        throw new Error("Invalid group code. Please check the code and try again.");
       }
 
       console.log('Found group:', group);
