@@ -37,21 +37,21 @@ export const GroupJoin = ({ session }) => {
     try {
       console.log('Attempting to join group with code:', trimmedCode);
       
-      // First, verify the group exists
+      // First, verify the group exists and get its details
       const { data: group, error: groupError } = await supabase
         .from('groups')
-        .select('id, name')
+        .select('id, name, created_by')
         .eq('join_code', trimmedCode)
         .maybeSingle();
 
       if (groupError) {
         console.error('Error checking group:', groupError);
-        throw new Error("Failed to check group code");
+        throw new Error("Failed to verify group code");
       }
 
       if (!group) {
         console.log('No group found with code:', trimmedCode);
-        throw new Error("Invalid group code. Please check the code and try again.");
+        throw new Error("This group code is not valid or has expired. Please check with the group admin.");
       }
 
       console.log('Found group:', group);
@@ -64,16 +64,16 @@ export const GroupJoin = ({ session }) => {
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      if (membershipError && membershipError.code !== 'PGRST116') {
+      if (membershipError) {
         console.error('Error checking membership:', membershipError);
-        throw new Error("Failed to check group membership");
+        throw new Error("Failed to verify group membership");
       }
 
       if (existingMembership) {
         throw new Error("You're already a member of this group");
       }
 
-      // Then join the group
+      // Join the group
       const { error: joinError } = await supabase
         .from('group_members')
         .insert({
@@ -83,7 +83,7 @@ export const GroupJoin = ({ session }) => {
 
       if (joinError) {
         console.error('Error joining group:', joinError);
-        throw new Error("Failed to join group");
+        throw new Error("Failed to join group. Please try again later.");
       }
 
       toast({
