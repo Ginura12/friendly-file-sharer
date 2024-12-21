@@ -17,11 +17,15 @@ export const GroupManagementSection = ({ session }) => {
     try {
       const { data, error } = await supabase
         .from('expert_users')
-        .select()
+        .select('user_id')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error checking expert user status:', error);
+        return;
+      }
+      
       setIsExpertUser(!!data);
     } catch (error) {
       console.error('Error checking expert user status:', error);
