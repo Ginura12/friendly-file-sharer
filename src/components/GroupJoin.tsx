@@ -26,11 +26,33 @@ export const GroupJoin = ({ session }) => {
       const { data: group, error: groupError } = await supabase
         .from('groups')
         .select('id')
-        .eq('join_code', groupCode)
+        .eq('join_code', groupCode.trim())
         .single();
 
-      if (groupError || !group) {
+      if (groupError) {
+        console.error('Error checking group:', groupError);
         throw new Error("Invalid group code");
+      }
+
+      if (!group) {
+        throw new Error("Invalid group code");
+      }
+
+      // Check if user is already a member
+      const { data: existingMembership, error: membershipError } = await supabase
+        .from('group_members')
+        .select('id')
+        .eq('group_id', group.id)
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (existingMembership) {
+        throw new Error("You're already a member of this group");
+      }
+
+      if (membershipError && membershipError.code !== 'PGRST116') { // PGRST116 means no rows returned
+        console.error('Error checking membership:', membershipError);
+        throw new Error("Failed to check group membership");
       }
 
       // Then join the group
@@ -42,10 +64,8 @@ export const GroupJoin = ({ session }) => {
         });
 
       if (joinError) {
-        if (joinError.code === '23505') { // Unique violation
-          throw new Error("You're already a member of this group");
-        }
-        throw joinError;
+        console.error('Error joining group:', joinError);
+        throw new Error("Failed to join group");
       }
 
       toast({
