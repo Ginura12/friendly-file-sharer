@@ -22,21 +22,26 @@ export const GroupJoin = ({ session }) => {
 
     setLoading(true);
     try {
+      console.log('Attempting to join group with code:', groupCode.trim());
+      
       // First, verify the group exists
       const { data: group, error: groupError } = await supabase
         .from('groups')
-        .select('id')
+        .select('id, name')
         .eq('join_code', groupCode.trim())
-        .single();
+        .maybeSingle();
 
       if (groupError) {
         console.error('Error checking group:', groupError);
-        throw new Error("Invalid group code");
+        throw new Error("Failed to check group code");
       }
 
       if (!group) {
+        console.log('No group found with code:', groupCode.trim());
         throw new Error("Invalid group code");
       }
+
+      console.log('Found group:', group);
 
       // Check if user is already a member
       const { data: existingMembership, error: membershipError } = await supabase
@@ -44,15 +49,15 @@ export const GroupJoin = ({ session }) => {
         .select('id')
         .eq('group_id', group.id)
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
+
+      if (membershipError && membershipError.code !== 'PGRST116') {
+        console.error('Error checking membership:', membershipError);
+        throw new Error("Failed to check group membership");
+      }
 
       if (existingMembership) {
         throw new Error("You're already a member of this group");
-      }
-
-      if (membershipError && membershipError.code !== 'PGRST116') { // PGRST116 means no rows returned
-        console.error('Error checking membership:', membershipError);
-        throw new Error("Failed to check group membership");
       }
 
       // Then join the group
@@ -70,7 +75,7 @@ export const GroupJoin = ({ session }) => {
 
       toast({
         title: "Success",
-        description: "Successfully joined the group!",
+        description: `Successfully joined ${group.name}!`,
       });
       setGroupCode("");
     } catch (error) {
